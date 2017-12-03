@@ -1,0 +1,90 @@
+---
+output: pdf_document
+---
+#Analyse descriptive
+##Traitement des valeurs manquantes
+###Introduction
+
+Les observations ayant des valeurs manquantes repr?sentent un d?fi important car les proc?dures de mod?lisation classiques ?liminent tout simplement ces observations des analyses. Lorsque les valeurs manquantes sont peu nombreuses (tr?s approximativement, moins de 5% du nombre total d'observations) et que ces valeurs peuvent ?tre consid?r?es comme al?atoirement manquantes, c'est-?-dire qu'une valeur manquante ne d?pend pas des autres valeurs, alors la m?thode traditionnelle d'?limination est relativement "s?re". L'option Valeurs manquantes peut vous aider ? d?terminer si l'?limination est suffisante et vous proposer des m?thodes de traitement des valeurs manquantes lorsqu'elle ne suffit pas.  
+La table suivante r?sume le taux de valeurs manquantes pour toutes les variables de la base de donn?es.
+
+```{r model, collapse=TRUE,echo=FALSE,warning=FALSE}
+library(knitr)
+temp=round(missingness(),digits = 2)
+row.names(temp)=" "
+kable(temp)
+
+```
+
+Pour r?sumer les r?sultats de la table pr?cedente, il est interessant de visualiser les r?sultats sous forme d'histgramme de valeures manquantes.
+```{r,collapse=TRUE,echo=FALSE,fig.height=4, fig.width=5,fig.align='center'}
+aggm=aggr(f(), col=c("#619CFF","#F8766D"),lwd=0.1,
+              sortVars=TRUE, labels=names(f()), cex.axis=1, gap=3,ylab=c("Pourcentage des valeurs manquantes",""),plot = FALSE)
+plot(aggm)
+
+```
+
+Le traitement des valeurs manqante s'?tablie par plusieurs techniques statistiques.
+
+```{r,results='asis',echo=FALSE}
+ if(sum(missingness()[1,])==0){cat("Continuer l'analyse, la base de don?es ne contient aucune valeur manquante")}else{  
+      if(input$missinrate>max(missingness()[1,])) {cat("Vous pouvez ommettre les valeurs (observations) manquantes des variables suivantes :")}
+      else {if(input$missinrate!=0 && input$missinrate>missingness()[1,]){cat("Votre anlayse requiert un traitement des valeurs manquantes. Pour se faire, il existe une multitude de m?thodes pour traiter les valeurs manquantes (amputation), depuis la plus simple: amputation par la moyenne, ? l'amputation par regression lin?aire. Les variables conern?es par ce traitement sont:")
+        cat('\\newline \n')}
+        else cat("")}
+    }
+
+numcol=ncol(missingness())
+for( i in 1:numcol){
+      if(missingness()[1,i]<input$missinrate){
+        if(missingness()[1,i]>0)
+          paste0(cat('-',colnames(missingness())[i],".",'\\newline \n'))
+      }
+}
+```
+
+
+#Analyse univari?e
+
+```{r,message=FALSE,warning=FALSE,collapse=TRUE,echo=FALSE,fig.height=4, fig.width=5,fig.align='center',fig.cap=input$columname}
+var=input$columname
+    varuse=unlist(new_f()[,var])
+    cls=class(varuse)
+    Date=new_f()[,1]
+  if(input$fliplab==TRUE){v$flip=theme(axis.text.x=element_text(angle=90))}else {v$flip=NULL}
+if (any(cls==c("integer","numeric"))==TRUE) {
+  v$Xlim=xlim(c(input$inslider[1],input$inslider[2]))
+  g=ggplot(NULL,aes(x=varuse))+xlab(var)+ylab("Fr?quence")+
+    geom_histogram(bins=input$bins)+theme_classic()+v$flip+v$Xlim}else {
+        g=ggplot(NULL,aes(x=as.factor(varuse)))+xlab(var)+geom_bar()+theme_classic()+ylab("Fr?quence")+v$flip}
+    g
+```
+
+##Descriptif de la base de donn?es
+
+```{r,results='asis',echo=FALSE}
+num_col=ncol(new_f())
+s=summary(new_f())
+
+for(i in 1:num_col){
+  var=unlist(new_f()[,i])
+  cls=class(var)
+  if (any(cls==c("integer","numeric"))==TRUE){
+#Minimum:    
+    cat(paste("le minimum de la varible",colnames(new_f())[i],"est",substr(s[1,i],start=9,stop=nchar(s[1,i])-2),sep=" "))
+    cat(", ")
+#Maximum
+    cat(paste("le maximum quant ? lui est atteint en",substr(s[6,i],start=9,stop=nchar(s[6,i])-2),sep=" "))
+    cat(".")
+    cat('\\newline \n')
+
+#1st quantile 
+
+#3rd quartile
+
+#Mean
+    } 
+}
+
+```
+
